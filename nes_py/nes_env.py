@@ -386,4 +386,9 @@ class NESEnv(gym.Env):
         return ['NOOP']
 
 # explicitly define the outward facing API of this module
-__all__ = [NESEnv.__name__]
+from .wrappers.vision_only import VisionOnlyNES
+from .wrappers.pixel_reward import PixelShiftReward
+
+
+# explicitly define the outward facing API of this package
+__all__ = [NESEnv.__name__, "VisionOnlyNES", "PixelShiftReward"]
