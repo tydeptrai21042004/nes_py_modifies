@@ -8,7 +8,7 @@
 * NES cuộn nền qua thanh ghi PPUSCROLL (\$2005) ở PPU: nhân vật chạy sang phải thì nền cuộn sang trái. Trước khi camera đạt ngưỡng để cuộn, nền có thể đứng yên nên đo dịch chuyển toàn cục sẽ xấp xỉ 0.
 * Bản đồ nút tay cầm NES trả về theo thứ tự A, B, Select, Start, Up, Down, Left, Right; nếu vô tình giữ Start sẽ pause → khung hình đứng yên, các phép đo từ ảnh sẽ sai.
 
-# ưhat i do to make it not fake
+# what i do to make it not fake
 
 1. Khóa chế độ vision-only
 
