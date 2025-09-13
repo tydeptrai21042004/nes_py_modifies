@@ -1,183 +1,33 @@
-<p align="center">
-<img
-    src="https://user-images.githubusercontent.com/2184469/42918029-a8364c66-8ad1-11e8-8147-2653091ccd38.png"
-    width="50%"
-/>
-</p>
+# Semi-fake ?
 
-[![build-status][]][ci-server]
-[![PackageVersion][pypi-version]][pypi-home]
-[![PythonVersion][python-version]][python-home]
-[![Stable][pypi-status]][pypi-home]
-[![Format][pypi-format]][pypi-home]
-[![License][pypi-license]](LICENSE)
+* Nhiều pipeline tuyên bố học từ ảnh RGB nhưng lại đọc trạng thái nội bộ RAM của game để tính reward, điều kiện dừng, metric — ví dụ Super Mario Bros dùng các địa chỉ \$006D (page X trong màn), \$0086 (tọa độ X trên màn). Đây là tín hiệu đặc quyền không tồn tại ngoài giả lập, nên tuy vẫn chạy môi trường thật, kết quả không còn thuần từ ảnh .
+* Trong chuẩn Atari/ALE, cần chọn một trong hai chế độ quan sát: rgb hoặc ram. Nếu tuyên bố “từ ảnh”, không được pha trộn với ram.
 
-[build-status]: https://app.travis-ci.com/Kautenja/nes-py.svg?branch=master
-[ci-server]: https://app.travis-ci.com/Kautenja/nes-py
-[pypi-version]: https://badge.fury.io/py/nes-py.svg
-[pypi-license]: https://img.shields.io/pypi/l/nes-py.svg
-[pypi-status]: https://img.shields.io/pypi/status/nes-py.svg
-[pypi-format]: https://img.shields.io/pypi/format/nes-py.svg
-[pypi-home]: https://badge.fury.io/py/nes-py
-[python-version]: https://img.shields.io/pypi/pyversions/nes-py.svg
-[python-home]: https://python.org
+# Lưu ý 
 
-nes-py is an NES emulator and OpenAI Gym interface for MacOS, Linux, and
-Windows based on the [SimpleNES](https://github.com/amhndu/SimpleNES) emulator.
+* NES cuộn nền qua thanh ghi PPUSCROLL (\$2005) ở PPU: nhân vật chạy sang phải thì nền cuộn sang trái. Trước khi camera đạt ngưỡng để cuộn, nền có thể đứng yên nên đo dịch chuyển toàn cục sẽ xấp xỉ 0.
+* Bản đồ nút tay cầm NES trả về theo thứ tự A, B, Select, Start, Up, Down, Left, Right; nếu vô tình giữ Start sẽ pause → khung hình đứng yên, các phép đo từ ảnh sẽ sai.
 
-<table align="center">
-    <tr>
-        <td>
-            <img
-                width="256"
-                alt="Bomberman II"
-                src="https://user-images.githubusercontent.com/2184469/84821320-8c52e780-afe0-11ea-820a-662d0e54fc90.png"
-            />
-        </td>
-        <td>
-             <img
-                width="256"
-                alt="Castelvania II"
-                src="https://user-images.githubusercontent.com/2184469/84821323-8ceb7e00-afe0-11ea-89f1-56d379ae4286.png"
-            />
-        </td>
-        <td>
-            <img
-                width="256"
-                alt="Excitebike"
-                src="https://user-images.githubusercontent.com/2184469/84821325-8d841480-afe0-11ea-9ae2-599b83af6f65.png"
-            />
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <img
-                width="256"
-                alt="Super Mario Bros."
-                src="https://user-images.githubusercontent.com/2184469/84821327-8d841480-afe0-11ea-8172-d564aca35b5e.png"
-            />
-        </td>
-        <td>
-            <img
-                width="256"
-                alt="The Legend of Zelda"
-                src="https://user-images.githubusercontent.com/2184469/84821329-8d841480-afe0-11ea-9a57-c9daca04ed3b.png"
-            />
-        </td>
-        <td>
-            <img
-                 width="256"
-                 alt="Tetris"
-                 src="https://user-images.githubusercontent.com/2184469/84822244-fc15a200-afe1-11ea-81de-2323845d7537.png"
-            />
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <img
-                 width="256"
-                 alt="Contra"
-                 src="https://user-images.githubusercontent.com/2184469/84822247-fcae3880-afe1-11ea-901d-1ef5e8378989.png"
-            />
-        </td>
-        <td>
-            <img
-                 width="256"
-                 alt="Mega Man II"
-                 src="https://user-images.githubusercontent.com/2184469/84822249-fcae3880-afe1-11ea-8271-9e898933e571.png"
-            />
-        </td>
-        <td>
-            <img
-                width="256"
-                alt="Bubble Bobble"
-                src="https://user-images.githubusercontent.com/2184469/84822551-79411700-afe2-11ea-9ed6-947d78f29e8f.png"
-            />
-        </td>
-    </tr>
-</table>
+# ưhat i do to make it not fake
 
-# Installation
+1. Khóa chế độ vision-only
 
-The preferred installation of `nes-py` is from `pip`:
+   * Thêm wrapper VisionOnlyNES chặn truy cập env.ram để tránh rò rỉ trạng thái đặc quyền, giữ ranh giới rgb khác ram như tinh thần của ALE.
 
-```shell
-pip install nes-py
-```
+2. Reward từ ảnh, không dùng RAM
 
-## Debian
+   * Thêm PixelShiftReward:
 
-Make sure you have the `clang++` compiler installed:
+     * Đo dịch chuyển nền theo trục X bằng normalized cross-correlation (NCC) giữa các frame đã thu nhỏ (độ lệch < 0 nghĩa là nền trôi trái).
+     * Hiệu chỉnh dấu: vì nền cuộn trái khi đi phải, reward quy ước tiến phải là dương.
+     * Khi nền chưa cuộn, dùng template matching NCC theo dõi dịch chuyển cục bộ của nhân vật (player Δx), rồi chọn nguồn tín hiệu mạnh hơn làm reward. NCC/template matching bền vững với thay đổi sáng tương đối.
 
-```shell
-sudo apt-get install clang
-```
+3. Bộ test vật lý từ ảnh (không dùng RAM)
 
-## Windows
+   * Progress > NOOP: đi Right(+B) phải cho tổng reward từ ảnh cao hơn đứng yên — hoạt động cả giai đoạn tiền scroll (dựa player) lẫn sau khi camera cuộn (dựa nền).
+   * Quỹ đạo nhảy parabol: theo dõi y(t) của sprite từ ảnh, fit y = a t² + b t + c cho a > 0 và R² cao → gia tốc gần hằng theo trục dọc.
+   * Ma sát và giảm tốc: thả nút sau khi chạy phải → độ dịch chuyển theo khung giảm dần.
+   * Onset cuộn camera: ban đầu nguồn motion là player, sau đó chuyển dần sang background khi camera bắt đầu cuộn, đúng hành vi PPUSCROLL.
 
-You'll need to install the Visual-Studio 17.0 tools for Windows installation.
-The [Visual Studio Community](https://visualstudio.microsoft.com/downloads/)
-package provides these tools for free.
 
-# Usage
-
-To access the NES emulator from the command line use the following command.
-
-```shell
-nes_py -r <path_to_rom>
-```
-
-To print out documentation for the command line interface execute:
-
-```shell
-nes_py -h
-```
-
-## Controls
-
-| Keyboard Key | NES Joypad    |
-|:-------------|:--------------|
-| W            | Up            |
-| A            | Left          |
-| S            | Down          |
-| D            | Right         |
-| O            | A             |
-| P            | B             |
-| Enter        | Start         |
-| Space        | Select        |
-
-## Parallelism Caveats
-
-both the `threading` and `multiprocessing` packages are supported by
-`nes-py` with some caveats related to rendering:
-
-1.  rendering **is not** supported from instances of `threading.Thread`
-2.  rendering **is** supported from instances of `multiprocessing.Process`,
-    but `nes-py` must be imported within the process that executes the render
-    call
-
-# Development
-
-To design a custom environment using `nes-py`, introduce new features, or fix
-a bug, please refer to the [Wiki](https://github.com/Kautenja/nes-py/wiki).
-There you will find instructions for:
-
--   setting up the development environment
--   designing environments based on the `NESEnv` class
--   reference material for the `NESEnv` API
--   documentation for the `nes_py.wrappers` module
-
-# Cartridge Mapper Compatibility
-
-0.  NROM
-1.  MMC1 / SxROM
-2.  UxROM
-3.  CNROM
-
-You can check the compatibility for each ROM in the following
-[list](https://github.com/Kautenja/nes-py/blob/master/nesmapper.txt)
-
-# Disclaimer
-
-**This project is provided for educational purposes only. It is not
-affiliated with and has not been approved by Nintendo.**
+summary: không dùng ram chỉ dùng frame
