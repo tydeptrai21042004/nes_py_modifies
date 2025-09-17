@@ -40,7 +40,7 @@ Tùy kênh dữ liệu đang dựa vào:
 ### Chỉ dựa vào 2 KiB RAM CPU
 
 * Không thấy trực tiếp các thanh ghi PPU (\$2000–\$2007) điều khiển scroll và kết xuất; 
-### Một số thiếu hụt cụ thể thường gặp trong `info`/reward mặc định
+### Một số thiếu hụt gặp trong `info`/reward mặc định
 
 * Trạng thái camera/scroll: các biến/cờ quyết định khi nào camera bắt đầu cuộn, điểm mép màn hình, ngưỡng scroll,…  không có trong `info`.
 * Chi tiết scroll tinh của PPU: coarse/fine X,Y do `$2005` quản lý không có trong `info`.
